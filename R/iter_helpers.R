@@ -125,7 +125,7 @@ zip <- function(..., fill=NA, longest = TRUE){
   if (longest){
     maxn <- max(n)
     l <- lapply(1:maxn, function(i){
-      sapply(seq_along(dots), function(j){
+      lapply(seq_along(dots), function(j){
         if (n[j] < i) return(fill)
         return(dots[[j]][[i]])
       })

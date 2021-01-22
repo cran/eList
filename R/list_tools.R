@@ -1,6 +1,6 @@
 #' Remove 'NULL' Entries from List
 #'
-#' Function removes all items that are \code{NULL} from a list, environment,
+#' Function removes all items that are \code{NULL} or empty from a list
 #' or other object.
 #'
 #' @param x object to be checked
@@ -21,4 +21,5 @@ null.omit <- function(x) UseMethod("null.omit")
 null.omit.default <- function(x) x
 #' @method null.omit list
 #' @export
-null.omit.list <- function(x) x[!(sapply(x, is.null))]
+null.omit.list <- function(x) x[!(sapply(x, function(i) is.null(i)))]
+

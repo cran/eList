@@ -98,6 +98,8 @@
 #' e <- Env(for (i.j in items(people)) i = j$age)
 #' e$John
 #'
+#' Num(for (i in 1:10) for (j in 2:6) if (i == j) i^2)
+#'
 NULL
 
 #' @describeIn comprehension Create generalized comprehension function
@@ -119,59 +121,79 @@ Comp <- function(map = lapply, fun=NULL){
 #' @export
 List <- structure(function(loop, clust=NULL, fun=NULL){
   if (is.null(clust)){mapfun <- lapply
-  } else { mapfun <- function(X, FUN) parLapply(clust, X, FUN)}
-  l <- eval(parse(text=.parse_for(substitute(loop), mapfun=mapfun)))
-  if (is.null(fun)) return(l)
-  fun(l)
+  } else { mapfun <- function(X, FUN) parallel::parLapply(clust, X, FUN)}
+  CURR_ENV <- environment()
+  pt <- parse(text=.parse_for(substitute(loop), mapfun=mapfun))
+  parent.env(CURR_ENV) <- sys.frame()
+  ret <- eval(pt, CURR_ENV)
+  if (is.null(fun)) return(ret)
+  fun(ret)
 }, mapfun = lapply, class = c("Comprehension", "function"))
 #' @describeIn comprehension Generate an 'environment' from a \code{for} loop
 #' @importFrom parallel parLapply
 #' @export
 Env <- structure(function(loop, clust=NULL){
   if (is.null(clust)){mapfun <- lapply
-  } else {mapfun <- function(X, FUN) parLapply(clust, X, FUN)}
-  as.environment(eval(parse(text=.parse_for(substitute(loop), mapfun=mapfun))))
+  } else {mapfun <- function(X, FUN) parallel::parLapply(clust, X, FUN)}
+  CURR_ENV <- environment()
+  pt <- parse(text=.parse_for(substitute(loop), mapfun=mapfun))
+  parent.env(CURR_ENV) <- sys.frame()
+  as.environment(eval(pt, CURR_ENV))
 }, mapfun = lapply, fun = as.environment, class = c("Comprehension", "function"))
-#' @describeIn comprehension Generate a 'vector' from a \code{for} loop
+#' @describeIn comprehension Generate a flat, atomic 'vector' from a \code{for} loop
 #' @importFrom parallel parSapply
 #' @export
 Vec <- structure(function(loop, clust=NULL, drop.names = FALSE){
-  if (is.null(clust)){ mapfun <- sapply
-  } else {mapfun <- function(X, FUN, ...) parSapply(clust, X, FUN, ...)}
-  ret <- eval(parse(text=.parse_for(substitute(loop), mapfun=mapfun)))
-  if (drop.names) return(as.vector(ret))
-  .save_names(ret, as.vector)
-}, mapfun = sapply, fun = as.vector, class = c("Comprehension", "function"))
+  mapfun <- sapply
+  if (!is.null(clust)) mapfun <- function(X, FUN, ...) parallel::parSapply(clust, X, FUN, ...)
+  #if (is.null(clust)){ mapfun <- sapply
+  #} else {mapfun <- function(X, FUN, ...) parSapply(clust, X, FUN, ...)}
+  CURR_ENV <- environment()
+  pt <- parse(text=.parse_for(substitute(loop), mapfun=mapfun))
+  parent.env(CURR_ENV) <- sys.frame()
+  ret <- eval(pt, CURR_ENV)
+  if (drop.names) return(as.vector(flatten(ret)))
+  .save_names(ret, function(i){as.vector(flatten(i))})
+}, mapfun = sapply, fun = function(i){as.vector(flatten(i))}, class = c("Comprehension", "function"))
 #' @describeIn comprehension Generate a 'numeric' vector from a \code{for} loop
 #' @importFrom parallel parSapply
 #' @export
 Num <- structure(function(loop, clust=NULL, drop.names = FALSE){
   if (is.null(clust)){mapfun <- sapply
-  } else {mapfun <- function(X, FUN, ...) parSapply(clust, X, FUN, ...)}
-  ret <- eval(parse(text=.parse_for(substitute(loop), mapfun=mapfun)))
-  if (drop.names) return(as.numeric(ret))
-  .save_names(ret, as.numeric)
-}, mapfun = sapply, fun = as.numeric, class = c("Comprehension", "function"))
+  } else {mapfun <- function(X, FUN, ...) parallel::parSapply(clust, X, FUN, ...)}
+  CURR_ENV <- environment()
+  pt <- parse(text=.parse_for(substitute(loop), mapfun=mapfun))
+  parent.env(CURR_ENV) <- sys.frame()
+  ret <- eval(pt, CURR_ENV)
+  if (drop.names) return(as.numeric(flatten(ret)))
+  .save_names(ret, function(i){as.numeric(flatten(i))})
+}, mapfun = sapply, fun = function(i){as.numeric(flatten(i))}, class = c("Comprehension", "function"))
 #' @describeIn comprehension Generate a 'character' vector from a \code{for} loop
 #' @importFrom parallel parSapply
 #' @export
 Chr <- structure(function(loop, clust=NULL, drop.names = FALSE){
   if (is.null(clust)){mapfun <- sapply
-  } else {mapfun <- function(X, FUN, ...) parSapply(clust, X, FUN, ...)}
-  ret <- eval(parse(text=.parse_for(substitute(loop), mapfun=mapfun)))
-  if (drop.names) return(as.character(ret))
-  .save_names(ret, as.character)
-}, mapfun = sapply, fun = as.character, class = c("Comprehension", "function"))
+  } else {mapfun <- function(X, FUN, ...) parallel::parSapply(clust, X, FUN, ...)}
+  CURR_ENV <- environment()
+  pt <- parse(text=.parse_for(substitute(loop), mapfun=mapfun))
+  parent.env(CURR_ENV) <- sys.frame()
+  ret <- eval(pt, CURR_ENV)
+  if (drop.names) return(as.character(flatten(ret)))
+  .save_names(ret, function(i){as.character(flatten(i))})
+}, mapfun = sapply, fun = function(i){as.character(flatten(i))}, class = c("Comprehension", "function"))
 #' @describeIn comprehension Generate a 'logical' vector from a \code{for} loop
 #' @importFrom parallel parSapply
 #' @export
 Logical <- structure(function(loop, clust=NULL, drop.names = FALSE){
   if (is.null(clust)){mapfun <- sapply
-  } else {mapfun <- function(X, FUN, ...) parSapply(clust, X, FUN, ...)}
-  ret <- eval(parse(text=.parse_for(substitute(loop), mapfun=mapfun)))
-  if (drop.names) return(as.logical(ret))
-  .save_names(ret, as.logical)
-}, mapfun = sapply, fun = as.logical, class = c("Comprehension", "function"))
+  } else {mapfun <- function(X, FUN, ...) parallel::parSapply(clust, X, FUN, ...)}
+  CURR_ENV <- environment()
+  pt <- parse(text=.parse_for(substitute(loop), mapfun=mapfun))
+  parent.env(CURR_ENV) <- sys.frame()
+  ret <- eval(pt, CURR_ENV)
+  if (drop.names) return(as.logical(flatten(ret)))
+  .save_names(ret, function(i){as.logical(flatten(i))})
+}, mapfun = sapply, fun = function(i){as.logical(flatten(i))}, class = c("Comprehension", "function"))
 #' @describeIn comprehension Generate a 'matrix' from a \code{for} loop
 #' @importFrom parallel parSapply
 #' @export
@@ -181,18 +203,24 @@ Mat <-  structure(function(loop, clust=NULL, by.col=TRUE){
     } else {mapfun <- function(x, f, ...) sapply(rows(x), f, ...)}
     mapfun <- sapply
   } else {
-    if (by.col){mapfun <- function(x, f, ...) parSapply(clust, cols(x), f, ...)
-    } else {mapfun <- function(x, f, ...) parSapply(clust, rows(x), f, ...)}
+    if (by.col){mapfun <- function(x, f, ...) parallel::parSapply(clust, cols(x), f, ...)
+    } else {mapfun <- function(x, f, ...) parallel::parSapply(clust, rows(x), f, ...)}
   }
-  as.matrix(eval(parse(text=.parse_for(substitute(loop), mapfun=mapfun))))
+  CURR_ENV <- environment()
+  pt <- parse(text=.parse_for(substitute(loop), mapfun=mapfun))
+  parent.env(CURR_ENV) <- sys.frame()
+  as.matrix(eval(pt, CURR_ENV))
 }, mapfun = function(x, f, ...) sapply(cols(x), f, ...), fun = as.matrix, class = c("Comprehension", "function"))
 #' @describeIn comprehension Generate a 'data.frame' from a \code{for} loop
 #' @importFrom parallel parLapply
 #' @export
 DF <-  structure(function(loop, clust=NULL){
   if (is.null(clust)){mapfun <- lapply
-  } else {mapfun <- function(X, FUN) parLapply(clust, X, FUN)}
-  as.data.frame(eval(parse(text=.parse_for(substitute(loop), mapfun=mapfun))))
+  } else {mapfun <- function(X, FUN) parallel::parLapply(clust, X, FUN)}
+  CURR_ENV <- environment()
+  pt <- parse(text=.parse_for(substitute(loop), mapfun=mapfun))
+  parent.env(CURR_ENV) <- sys.frame()
+  as.data.frame(eval(pt, CURR_ENV))
 }, mapfun = lapply, fun = as.data.frame, class = c("Comprehension", "function"))
 
 

@@ -13,7 +13,7 @@ null.omit(x)
 \code{x} without \code{NULL} entries
 }
 \description{
-Function removes all items that are \code{NULL} from a list, environment,
+Function removes all items that are \code{NULL} or empty from a list
 or other object.
 }
 \examples{

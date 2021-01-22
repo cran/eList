@@ -29,25 +29,25 @@ flatten <- function(x, level = -1, ...) UseMethod("flatten")
 #' @method flatten default
 #' @export
 flatten.default <- function(x, level = -1, ...) return(x)
-#' @method flatten default
+#' @method flatten environment
 #' @export
 flatten.environment <- function(x, level = -1, ...){
   if (level[1] == 0) return(x)
   flatten(as.list(x), level=level[1]-1)
 }
-#' @method flatten default
+#' @method flatten list
 #' @export
 flatten.list <- function(x, level = -1, ...){
   if (level[1] == 0) return(x)
   Reduce(c, lapply(x, flatten, level=level[1]-1, ...))
 }
-#' @method flatten default
+#' @method flatten matrix
 #' @export
 flatten.matrix <- function(x, level = -1, ...){
   if (level[1] == 0) return(x)
   flatten(cols(x), level=level[1]-1)
 }
-#' @method flatten default
+#' @method flatten data.frame
 #' @export
 flatten.data.frame <- function(x, level = -1, ...){
   if (level[1] == 0) return(x)

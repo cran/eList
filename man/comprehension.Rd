@@ -126,7 +126,7 @@ that makes the cost greater than the benefit for relatively small vectors. See
 
 \item \code{Env}: Generate an 'environment' from a \code{for} loop
 
-\item \code{Vec}: Generate a 'vector' from a \code{for} loop
+\item \code{Vec}: Generate a flat, atomic 'vector' from a \code{for} loop
 
 \item \code{Num}: Generate a 'numeric' vector from a \code{for} loop
 
@@ -156,5 +156,7 @@ Chr(for (i.j in items(people)) paste0(i, " is ", j$age, " years old."))
 
 e <- Env(for (i.j in items(people)) i = j$age)
 e$John
+
+Num(for (i in 1:10) for (j in 2:6) if (i == j) i^2)
 
 }
